@@ -1,0 +1,14 @@
+goal-writer
+Copyright 2026 Nick Spisak
+
+This product is a derivative work of the "goal-rider-author" skill
+(version 1.0.0), Copyright SpecStory, Inc., licensed under the Apache
+License, Version 2.0, and published by Greg Ceccarelli at
+https://www.gregceccarelli.com/goal-engineering.
+
+Modifications in this derivative include: restructuring the skill for
+progressive disclosure (templates split into references/, validation
+extracted to an executable script), extension with official Claude Code
+/goal and OpenAI Codex CLI /goal guidance (evaluator constraints,
+completion-audit alignment, effective-condition formula), a dual-harness
+installer, and an optional Codex custom-prompt shim.
