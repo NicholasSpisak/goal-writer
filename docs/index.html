@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goal Writer — brief an AI coding agent on a whole round of work, in two files</title>
+<meta name="description" content="Goal Writer is a portable skill for Claude Code and OpenAI Codex. It drafts a goal+rider document pair: a tight goal that fits the /goal limit plus an unlimited rider that carries the context, so an autonomous coding agent gets a finish line and a map.">
+<meta name="author" content="Nick Spisak">
+<meta property="og:title" content="Goal Writer — a finish line and a map for your coding agent">
+<meta property="og:description" content="Drafts goal+rider document pairs for Claude Code and OpenAI Codex, aligned with the official /goal best practices and the four loop types.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..600&family=Public+Sans:ital,wght@0,400..800;1,400..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E7; --paper-2:#EFE8D9; --card:#FBF8F1;
+    --ink:#1C1813; --ink-soft:#4A423A; --ink-faint:#6E6459;
+    --rule:#D8CEBB; --rule-strong:#C3B7A0;
+    --signal:#BF3B22; --signal-ink:#8F2A16; --signal-wash:#F3E2D8;
+    --slate:#2C4A57; --slate-soft:#42636F;
+    --focus:#1247C4;
+    --shadow:22px 22px 0 -8px rgba(28,24,19,.06);
+    --maxw:1080px;
+    --font-display:"Fraunces",Georgia,serif;
+    --font-body:"Public Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  :root[data-theme="dark"]{
+    --paper:#15120D; --paper-2:#1D1913; --card:#201B14;
+    --ink:#EEE7D8; --ink-soft:#C4BBA9; --ink-faint:#968C7B;
+    --rule:#352E23; --rule-strong:#463D2E;
+    --signal:#E8734A; --signal-ink:#F0906D; --signal-wash:#2A1D15;
+    --slate:#7FB0C2; --slate-soft:#6C97A6;
+    --focus:#8CB4FF;
+    --shadow:22px 22px 0 -8px rgba(0,0,0,.35);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --paper:#15120D; --paper-2:#1D1913; --card:#201B14;
+      --ink:#EEE7D8; --ink-soft:#C4BBA9; --ink-faint:#968C7B;
+      --rule:#352E23; --rule-strong:#463D2E;
+      --signal:#E8734A; --signal-ink:#F0906D; --signal-wash:#2A1D15;
+      --slate:#7FB0C2; --slate-soft:#6C97A6;
+      --focus:#8CB4FF;
+      --shadow:22px 22px 0 -8px rgba(0,0,0,.35);
+    }
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body); font-size:clamp(16px,1.05vw + 12px,18px);
+    line-height:1.62; font-weight:400;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    background-image:
+      linear-gradient(var(--rule) 1px,transparent 1px),
+      linear-gradient(90deg,var(--rule) 1px,transparent 1px);
+    background-size:100% 100%, 0 0;
+    background-attachment:fixed;
+  }
+  /* faint paper grain */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+    opacity:.035; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  :root[data-theme="dark"] body::before{mix-blend-mode:screen; opacity:.05}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 clamp(20px,5vw,52px); position:relative; z-index:1}
+
+  a{color:var(--signal-ink); text-decoration-thickness:1.5px; text-underline-offset:3px}
+  a:hover{color:var(--ink)}
+  :focus-visible{outline:3px solid var(--focus); outline-offset:3px; border-radius:2px}
+
+  .skip{position:absolute; left:-999px; top:0; background:var(--ink); color:var(--paper);
+    padding:12px 18px; z-index:99; font-weight:700}
+  .skip:focus{left:12px; top:12px}
+
+  /* ---- masthead ---- */
+  .masthead{border-bottom:2px solid var(--ink); position:sticky; top:0; z-index:20;
+    background:color-mix(in srgb,var(--paper) 88%,transparent); backdrop-filter:blur(8px)}
+  .masthead .wrap{display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:14px; padding-bottom:14px}
+  .brand{display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-weight:600; font-size:.82rem; letter-spacing:.02em; text-transform:uppercase; color:var(--ink)}
+  .brand .dot{width:12px; height:12px; background:var(--signal); border-radius:50%; box-shadow:0 0 0 3px var(--signal-wash); flex:none}
+  .mnav{display:flex; align-items:center; gap:22px}
+  .mnav a{font-family:var(--font-mono); font-size:.78rem; color:var(--ink-soft); text-decoration:none; letter-spacing:.01em}
+  .mnav a:hover{color:var(--signal-ink)}
+  .theme-btn{font-family:var(--font-mono); font-size:.72rem; text-transform:uppercase; letter-spacing:.08em;
+    background:transparent; border:1.5px solid var(--rule-strong); color:var(--ink-soft);
+    padding:7px 12px; border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; gap:7px}
+  .theme-btn:hover{border-color:var(--ink); color:var(--ink)}
+  @media(max-width:720px){.mnav a.navlink{display:none}}
+
+  /* ---- hero ---- */
+  .hero{padding:clamp(48px,9vw,104px) 0 clamp(36px,6vw,68px); border-bottom:1px solid var(--rule)}
+  .kicker{font-family:var(--font-mono); font-size:.8rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--signal-ink); display:flex; align-items:center; gap:12px; margin-bottom:26px}
+  .kicker::before{content:""; width:38px; height:2px; background:var(--signal); display:inline-block}
+  h1{font-family:var(--font-display); font-weight:600; font-optical-sizing:auto;
+    font-size:clamp(2.7rem,7.2vw,5.4rem); line-height:.98; letter-spacing:-.02em; margin:0 0 .35em;
+    max-width:16ch}
+  h1 em{font-style:italic; color:var(--signal); font-weight:500}
+  .lede{font-size:clamp(1.12rem,1.6vw,1.4rem); color:var(--ink-soft); max-width:46ch; margin:0 0 2.2em; line-height:1.5}
+  .lede strong{color:var(--ink); font-weight:700}
+  .cta-row{display:flex; flex-wrap:wrap; gap:14px; align-items:center}
+  .btn{font-family:var(--font-mono); font-weight:600; font-size:.9rem; text-decoration:none;
+    padding:14px 22px; border-radius:4px; display:inline-flex; align-items:center; gap:10px;
+    border:2px solid var(--ink); transition:transform .12s ease, box-shadow .12s ease}
+  .btn.primary{background:var(--signal); border-color:var(--signal); color:#fff}
+  .btn.primary:hover{color:#fff; transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--ink)}
+  .btn.ghost{background:transparent; color:var(--ink)}
+  .btn.ghost:hover{color:var(--ink); transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--rule-strong)}
+  @media(prefers-reduced-motion:reduce){.btn:hover{transform:none}}
+
+  .hero-cols{display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(28px,5vw,64px); align-items:start}
+  @media(max-width:820px){.hero-cols{grid-template-columns:1fr}}
+
+  /* the two-file emblem */
+  .emblem{position:relative; margin-top:6px}
+  .doc{background:var(--card); border:2px solid var(--ink); border-radius:6px; padding:18px 18px 16px; box-shadow:var(--shadow)}
+  .doc + .doc{margin-top:18px}
+  .doc.goal{position:relative}
+  .doc h3{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    margin:0 0 12px; color:var(--ink-faint); display:flex; justify-content:space-between; align-items:center}
+  .cap{background:var(--signal-wash); color:var(--signal-ink); border:1px solid var(--signal);
+    font-size:.66rem; padding:3px 8px; border-radius:999px; letter-spacing:.04em}
+  .barline{height:8px; border-radius:2px; background:var(--paper-2); margin:7px 0}
+  .barline i{display:block; height:100%; background:var(--slate-soft); border-radius:2px; opacity:.55}
+  .doc.rider .barline i{background:var(--signal); opacity:.4}
+  .doc.rider{min-height:196px}
+  .rides{font-family:var(--font-mono); font-size:.72rem; color:var(--signal-ink); text-align:center;
+    margin:12px 0 0; letter-spacing:.04em}
+  .rides span{display:inline-block; transform:rotate(0)}
+
+  /* ---- section scaffolding ---- */
+  section{padding:clamp(52px,8vw,92px) 0; border-bottom:1px solid var(--rule); scroll-margin-top:80px}
+  .sec-head{display:flex; gap:20px; align-items:baseline; margin-bottom:36px}
+  .sec-no{font-family:var(--font-mono); font-size:.85rem; color:var(--signal-ink); font-weight:600; flex:none;
+    padding-top:.4em}
+  h2{font-family:var(--font-display); font-weight:600; font-size:clamp(1.9rem,3.8vw,3rem);
+    line-height:1.02; letter-spacing:-.015em; margin:0; max-width:20ch}
+  .sec-intro{max-width:60ch; color:var(--ink-soft); font-size:1.08rem; margin:0 0 8px}
+  .sec-intro strong{color:var(--ink)}
+
+  /* problem callout */
+  .callout{background:var(--card); border:2px solid var(--ink); border-left-width:8px; border-left-color:var(--signal);
+    border-radius:6px; padding:24px 26px; margin-top:26px; max-width:64ch; box-shadow:var(--shadow)}
+  .callout p{margin:0}
+  .callout .big{font-family:var(--font-display); font-size:1.3rem; line-height:1.35; color:var(--ink); margin-bottom:6px}
+
+  /* two-column carries table */
+  .files{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:12px}
+  @media(max-width:720px){.files{grid-template-columns:1fr}}
+  .fcard{background:var(--card); border:2px solid var(--rule-strong); border-radius:6px; padding:24px; position:relative}
+  .fcard.spine{border-color:var(--ink)}
+  .fcard .tag{font-family:var(--font-mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint)}
+  .fcard h3{font-family:var(--font-display); font-size:1.5rem; margin:.2em 0 .1em; font-weight:600}
+  .fcard .budget{font-family:var(--font-mono); font-size:.82rem; color:var(--signal-ink); margin-bottom:14px; font-weight:500}
+  .fcard ul{margin:0; padding:0; list-style:none}
+  .fcard li{padding:8px 0 8px 22px; position:relative; border-top:1px solid var(--rule); font-size:.97rem; color:var(--ink-soft)}
+  .fcard li:first-child{border-top:none}
+  .fcard li::before{content:"→"; position:absolute; left:0; color:var(--signal); font-family:var(--font-mono)}
+
+  /* loop taxonomy grid */
+  .loops{display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:10px}
+  @media(max-width:720px){.loops{grid-template-columns:1fr}}
+  .loop{background:var(--card); border:2px solid var(--rule-strong); border-radius:6px; padding:22px; display:flex; flex-direction:column; gap:6px}
+  .loop.is-primary{border-color:var(--signal); box-shadow:var(--shadow)}
+  .loop .lname{font-family:var(--font-display); font-size:1.35rem; font-weight:600; display:flex; align-items:center; gap:10px}
+  .loop .badge{font-family:var(--font-mono); font-size:.6rem; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--signal); color:#fff; padding:3px 7px; border-radius:999px}
+  .loop dl{margin:8px 0 0; display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:.9rem}
+  .loop dt{font-family:var(--font-mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); padding-top:3px}
+  .loop dd{margin:0; color:var(--ink-soft)}
+  .loop .prim{font-family:var(--font-mono); font-size:.78rem; color:var(--slate); margin-top:10px; padding-top:10px; border-top:1px dashed var(--rule-strong)}
+  .loop .prim b{color:var(--ink); font-weight:600}
+  .note{font-family:var(--font-body); font-size:.95rem; color:var(--ink-faint); max-width:66ch; margin-top:24px; font-style:italic}
+
+  /* steps */
+  .steps{counter-reset:step; margin-top:6px; border-top:2px solid var(--ink)}
+  .step{counter-increment:step; display:grid; grid-template-columns:auto 1fr; gap:clamp(18px,4vw,42px);
+    padding:26px 0; border-bottom:1px solid var(--rule); align-items:start}
+  .step .num{font-family:var(--font-display); font-weight:600; font-size:clamp(2rem,4vw,3rem); line-height:1;
+    color:var(--signal); min-width:2.2ch}
+  .step .num::before{content:"0" counter(step)}
+  .step h3{font-family:var(--font-display); font-size:1.35rem; font-weight:600; margin:.1em 0 .3em}
+  .step p{margin:0; color:var(--ink-soft); max-width:60ch}
+  .step p .m{font-family:var(--font-mono); font-size:.86em; background:var(--paper-2); padding:1px 6px; border-radius:3px; color:var(--ink)}
+
+  /* harness split */
+  .harness{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:10px}
+  @media(max-width:720px){.harness{grid-template-columns:1fr}}
+  .hcard{border:2px solid var(--ink); border-radius:6px; overflow:hidden; background:var(--card)}
+  .hcard .top{background:var(--ink); color:var(--paper); padding:14px 20px; font-family:var(--font-mono);
+    font-size:.85rem; font-weight:600; display:flex; align-items:center; justify-content:space-between}
+  .hcard .top .fc{font-size:.62rem; background:var(--signal); color:#fff; padding:3px 8px; border-radius:999px; letter-spacing:.06em; text-transform:uppercase}
+  .hcard .body{padding:20px}
+  .hcard p{margin:0 0 14px; color:var(--ink-soft); font-size:.95rem}
+  .hcard p:last-child{margin-bottom:0}
+
+  /* code block */
+  .term{background:var(--ink); border-radius:6px; overflow:hidden; margin-top:20px; box-shadow:var(--shadow)}
+  .term .bar{display:flex; gap:7px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.1)}
+  .term .bar i{width:11px; height:11px; border-radius:50%; background:#5b5348}
+  .term .bar i:first-child{background:var(--signal)}
+  .term pre{margin:0; padding:20px 22px; overflow-x:auto; font-family:var(--font-mono); font-size:.86rem; line-height:1.7; color:#e9e2d3}
+  .term pre .c{color:#9a917f}
+  .term pre .p{color:var(--signal-ink); color:#E8905F}
+  .term pre .k{color:#8FC0D2}
+
+  /* install grid */
+  .install-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:22px; align-items:start}
+  @media(max-width:720px){.install-grid{grid-template-columns:1fr}}
+
+  /* footer */
+  footer{padding:clamp(44px,7vw,72px) 0; border-bottom:none}
+  .foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:32px}
+  @media(max-width:720px){.foot-grid{grid-template-columns:1fr}}
+  footer h4{font-family:var(--font-mono); font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 14px}
+  footer .tglobe{font-family:var(--font-display); font-size:1.6rem; font-weight:600}
+  footer ul{list-style:none; margin:0; padding:0}
+  footer li{margin-bottom:8px}
+  footer a{color:var(--ink-soft); text-decoration:none; font-size:.94rem}
+  footer a:hover{color:var(--signal-ink)}
+  .colophon{margin-top:36px; padding-top:22px; border-top:1px solid var(--rule); font-family:var(--font-mono);
+    font-size:.74rem; color:var(--ink-faint); display:flex; flex-wrap:wrap; gap:6px 20px; justify-content:space-between}
+
+  /* load-in animation */
+  @media(prefers-reduced-motion:no-preference){
+    .anim{opacity:0; transform:translateY(14px); animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+    .d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.45s}
+    @keyframes rise{to{opacity:1; transform:none}}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand"><span class="dot" aria-hidden="true"></span> Goal&nbsp;Writer</div>
+    <nav class="mnav" aria-label="Primary">
+      <a class="navlink" href="#idea">The idea</a>
+      <a class="navlink" href="#pair">The pair</a>
+      <a class="navlink" href="#loops">Loops</a>
+      <a class="navlink" href="#install">Install</a>
+      <a href="https://github.com/NicholasSpisak/goal-writer">GitHub ↗</a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-pressed="false">
+        <span id="themeLabel">Dark</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="h1">
+    <div class="wrap hero-cols">
+      <div>
+        <p class="kicker anim d1">A skill for Claude Code &amp; OpenAI Codex</p>
+        <h1 id="h1" class="anim d2">A finish line <em>and</em> a map for your coding agent.</h1>
+        <p class="lede anim d3">You hand an AI agent a goal and walk away; it works until the job is <strong>provably done</strong>. Goal Writer drafts the two files that make that actually work — a tight goal the agent can't misread, and a companion that carries everything else.</p>
+        <div class="cta-row anim d4">
+          <a class="btn primary" href="#install">Install the skill</a>
+          <a class="btn ghost" href="https://github.com/NicholasSpisak/goal-writer">View on GitHub</a>
+        </div>
+      </div>
+      <div class="emblem anim d5" role="img" aria-label="Diagram: a small capped Goal document sits above a taller unlimited Rider document; the rider rides along with the goal.">
+        <div class="doc goal">
+          <h3><span>goal.md · the spine</span> <span class="cap">≤ 4,000 chars</span></h3>
+          <div class="barline"><i style="width:92%"></i></div>
+          <div class="barline"><i style="width:74%"></i></div>
+          <div class="barline"><i style="width:83%"></i></div>
+        </div>
+        <p class="rides"><span aria-hidden="true">▲ rides along ▲</span></p>
+        <div class="doc rider">
+          <h3><span>rider.md · the map</span> <span class="cap" style="background:var(--slate);border-color:var(--slate);color:#fff">no limit</span></h3>
+          <div class="barline"><i style="width:96%"></i></div>
+          <div class="barline"><i style="width:88%"></i></div>
+          <div class="barline"><i style="width:91%"></i></div>
+          <div class="barline"><i style="width:70%"></i></div>
+          <div class="barline"><i style="width:85%"></i></div>
+          <div class="barline"><i style="width:79%"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE IDEA -->
+  <section id="idea" aria-labelledby="idea-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">01</span>
+        <h2 id="idea-h">What a <code style="font-family:var(--font-mono);font-size:.8em">/goal</code> is, in plain words</h2>
+      </div>
+      <p class="sec-intro">Both Claude Code and Codex have a <strong>/goal</strong> command. You give it a finish line — <em>“get the homepage Lighthouse score to 90, stop after 5 tries”</em> — and the agent keeps iterating. Each time it tries to stop, a checker reads your condition and either accepts it or sends the agent back to work. That’s a <strong>loop</strong>: repeat until a stop condition is met.</p>
+      <div class="callout">
+        <p class="big">Here’s the catch: the goal box only holds about 4,000 characters.</p>
+        <p>That’s a page and a half — nowhere near enough room for the schemas, file paths, phase plans, and edge cases a real round of work needs. Most people either overstuff the goal (and the agent wanders) or under-specify it (and the agent guesses). Goal Writer solves this by splitting the brief into two files.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE PAIR -->
+  <section id="pair" aria-labelledby="pair-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">02</span>
+        <h2 id="pair-h">Two files, two jobs</h2>
+      </div>
+      <p class="sec-intro">The <strong>goal</strong> is the spine — small enough to paste straight into <code style="font-family:var(--font-mono);font-size:.8em">/goal</code>. The <strong>rider</strong> is the map — unlimited, and it stays on disk where the agent reads it first. Paste the goal; the rider rides along. The same two files brief Claude Code, Codex, Cursor, or a human reviewer without a single change.</p>
+      <div class="files">
+        <article class="fcard spine">
+          <span class="tag">File one</span>
+          <h3>The Goal</h3>
+          <p class="budget">≤ 4,000 characters · pastes into /goal</p>
+          <ul>
+            <li>What to do, ending in one headline word</li>
+            <li>What to read first (absolute paths)</li>
+            <li>Posture — what must <em>not</em> change</li>
+            <li>Verification the agent can run and show</li>
+            <li>A stop condition, with a turn cap</li>
+          </ul>
+        </article>
+        <article class="fcard">
+          <span class="tag">File two</span>
+          <h3>The Rider</h3>
+          <p class="budget" style="color:var(--slate)">No size limit · stays on disk</p>
+          <ul>
+            <li>Data schemas and file layouts</li>
+            <li>Algorithms — the rider <em>is</em> the spec</li>
+            <li>A phased plan, one commit per phase</li>
+            <li>Named tests, written before the code</li>
+            <li>Out-of-scope list and invariants</li>
+          </ul>
+        </article>
+      </div>
+      <p class="note">The slash command is the runtime; the pair is the spec. The command dies with your session — the pair is committed to the repo and compounds across every future round.</p>
+    </div>
+  </section>
+
+  <!-- LOOPS -->
+  <section id="loops" aria-labelledby="loops-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">03</span>
+        <h2 id="loops-h">One pair, four kinds of loop</h2>
+      </div>
+      <p class="sec-intro">A loop is just an agent repeating work until it’s told to stop. The Claude Code team names four kinds. Goal Writer’s pair is <strong>primitive-agnostic</strong>: write it once, and it drives whichever loop the task needs — start with the simplest that fits.</p>
+      <div class="loops">
+        <div class="loop">
+          <div class="lname">Turn-based</div>
+          <dl>
+            <dt>Trigger</dt><dd>A single prompt from you</dd>
+            <dt>Stops</dt><dd>When the agent judges it’s done</dd>
+          </dl>
+          <p class="prim">Best for quick, one-off tasks. The rider’s named tests are exactly the “what good looks like” you’d encode to help it self-check.</p>
+        </div>
+        <div class="loop is-primary">
+          <div class="lname">Goal-based <span class="badge">Primary</span></div>
+          <dl>
+            <dt>Trigger</dt><dd>You run <b style="font-family:var(--font-mono)">/goal</b></dd>
+            <dt>Stops</dt><dd>Goal met, or the turn cap</dd>
+          </dl>
+          <p class="prim">Best when you know what “done” looks like. <b>The goal body is the condition; the rider is the map.</b> This is the loop Goal Writer is built for.</p>
+        </div>
+        <div class="loop">
+          <div class="lname">Time-based</div>
+          <dl>
+            <dt>Trigger</dt><dd>A clock interval</dd>
+            <dt>Stops</dt><dd>You cancel, or the work clears</dd>
+          </dl>
+          <p class="prim">Best for recurring or external work — a PR that gets reviews, a queue that fills. The same pair is re-fed each tick.</p>
+        </div>
+        <div class="loop">
+          <div class="lname">Proactive</div>
+          <dl>
+            <dt>Trigger</dt><dd>An event or schedule, no human</dd>
+            <dt>Stops</dt><dd>Per task; the routine runs until off</dd>
+          </dl>
+          <p class="prim">Best for well-defined streams — bug reports, triage, migrations. Each spawned agent consumes the pair as its per-task spec.</p>
+        </div>
+      </div>
+      <p class="note">Honest footnote: <code style="font-family:var(--font-mono);font-size:.82em">/loop</code>, <code style="font-family:var(--font-mono);font-size:.82em">/schedule</code>, and dynamic workflows are Claude Code features. Codex does the same recurring and proactive work by wrapping headless <code style="font-family:var(--font-mono);font-size:.82em">codex exec</code> in a scheduler like cron or CI. The durable unit — <code style="font-family:var(--font-mono);font-size:.82em">/goal</code> plus the pair — is shared by both.</p>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">04</span>
+        <h2 id="how-h">The workflow it runs for you</h2>
+      </div>
+      <p class="sec-intro">Ask for a goal and the skill does the prep that makes a loop finish the <em>right</em> thing — no coding required from you.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="num" aria-hidden="true"></div>
+          <div>
+            <h3>Reads your project first</h3>
+            <p>Architecture docs, prior goal+rider pairs, recent commits, and the source as it stands today. It grounds the goal in what’s really there — and asks rather than invents when something’s missing.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num" aria-hidden="true"></div>
+          <div>
+            <h3>Scopes one round</h3>
+            <p>One feature, a handful of files, about a day of agent time, named by a single headline word. If it can’t pick one word, that’s two rounds — and it splits them.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num" aria-hidden="true"></div>
+          <div>
+            <h3>Writes the goal under the cap</h3>
+            <p>The 4,000-character limit is the forcing function: it makes the skill decide what the goal <em>is</em> before writing it. Verification is written so the agent must <span class="m">run</span> each check and show the output — not just claim success.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num" aria-hidden="true"></div>
+          <div>
+            <h3>Writes the rider</h3>
+            <p>A phased plan with named tests written <em>before</em> the code, posture invariants, error messages that end in a <span class="m">try:</span> command, and an explicit out-of-scope list so the round stays shippable in a day.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="num" aria-hidden="true"></div>
+          <div>
+            <h3>Validates and hands off</h3>
+            <p>A bundled script checks the size cap, phase count, required sections, that the two files cite each other, and that they share one timestamp. Then you paste the goal into <span class="m">/goal</span> and close the laptop.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOTH HARNESSES -->
+  <section id="both" aria-labelledby="both-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">05</span>
+        <h2 id="both-h">First-class in both harnesses</h2>
+      </div>
+      <p class="sec-intro">The pair is written to satisfy <em>both</em> checkers at once — so one artifact runs unchanged whether the smart model designs and Codex builds, or Claude Code does both.</p>
+      <div class="harness">
+        <article class="hcard">
+          <div class="top">Claude Code <span class="fc">Supported</span></div>
+          <div class="body">
+            <p>A small, fast model reads the transcript after each turn and judges your condition. It <strong>never runs tools</strong> — so every check has to be something the agent’s own output can show.</p>
+            <p>Goal Writer writes verification that way by default: run the command, surface the result.</p>
+          </div>
+        </article>
+        <article class="hcard">
+          <div class="top">OpenAI Codex <span class="fc">Supported</span></div>
+          <div class="body">
+            <p>Codex re-injects the full objective every turn and runs a <strong>completion audit</strong> — mapping every requirement, artifact, and test to real evidence before it accepts “done.”</p>
+            <p>Precise, enumerable requirements close the round; vague ones stall it. The rider makes them precise.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install" aria-labelledby="install-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-no" aria-hidden="true">06</span>
+        <h2 id="install-h">Install &amp; use</h2>
+      </div>
+      <p class="sec-intro">One installer copies the skill into both harnesses. Then invoke it with your idea and let it draft the pair.</p>
+      <div class="term" role="img" aria-label="Terminal commands: clone the goal-writer repository, change into it, and run the install script for both harnesses at the user level.">
+        <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <pre><span class="c"># clone and install for Claude Code + Codex</span>
+git clone https://github.com/NicholasSpisak/goal-writer.git
+<span class="k">cd</span> goal-writer
+./install.sh              <span class="c"># both harnesses, user-level</span></pre>
+      </div>
+      <div class="install-grid">
+        <article class="hcard">
+          <div class="top">In Claude Code</div>
+          <div class="body">
+            <div class="term" style="margin:0;box-shadow:none">
+              <pre><span class="p">/goal-writer</span> harden the webhook handler
+             against replay attacks</pre>
+            </div>
+          </div>
+        </article>
+        <article class="hcard">
+          <div class="top">In Codex CLI</div>
+          <div class="body">
+            <div class="term" style="margin:0;box-shadow:none">
+              <pre><span class="p">$goal-writer</span> harden the webhook handler
+             against replay attacks</pre>
+            </div>
+          </div>
+        </article>
+      </div>
+      <p class="note">It reads your project, drafts the goal and rider into <code style="font-family:var(--font-mono);font-size:.82em">docs/goals/</code>, validates them, and tells you how to start the round. Then you paste the goal body into <code style="font-family:var(--font-mono);font-size:.82em">/goal</code> in either tool.</p>
+    </div>
+  </section>
+
+  <footer aria-labelledby="foot-h">
+    <div class="wrap">
+      <h2 id="foot-h" style="position:absolute;left:-999px">Site footer</h2>
+      <div class="foot-grid">
+        <div>
+          <div class="tglobe">Goal&nbsp;Writer</div>
+          <p style="color:var(--ink-soft);max-width:38ch;margin:.6em 0 0">Think hard up front. Define done. Delegate the middle. The pair compounds; the slash command does not.</p>
+        </div>
+        <div>
+          <h4>Project</h4>
+          <ul>
+            <li><a href="https://github.com/NicholasSpisak/goal-writer">Repository</a></li>
+            <li><a href="https://github.com/NicholasSpisak/goal-writer#readme">README</a></li>
+            <li><a href="https://github.com/NicholasSpisak/goal-writer/blob/main/skills/goal-writer/SKILL.md">The skill (SKILL.md)</a></li>
+            <li><a href="https://github.com/NicholasSpisak/goal-writer/blob/main/LICENSE">License · Apache-2.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Credits</h4>
+          <ul>
+            <li><a href="https://www.gregceccarelli.com/goal-engineering">Goal engineering — Greg Ceccarelli</a></li>
+            <li>Skill by Nick Spisak</li>
+          </ul>
+        </div>
+      </div>
+      <div class="colophon">
+        <span>Derivative of the goal-rider-author skill · Apache-2.0</span>
+        <span>Built for Claude Code &amp; OpenAI Codex · 2026</span>
+      </div>
+    </div>
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('themeBtn'), label=document.getElementById('themeLabel');
+    function systemDark(){return window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;}
+    function current(){return root.getAttribute('data-theme') || (systemDark()?'dark':'light');}
+    function apply(t){
+      root.setAttribute('data-theme',t);
+      var dark = t==='dark';
+      label.textContent = dark ? 'Light' : 'Dark';
+      btn.setAttribute('aria-pressed', dark ? 'true':'false');
+      btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
+    apply(current());
+    btn.addEventListener('click',function(){ apply(current()==='dark'?'light':'dark'); });
+  })();
+</script>
+</body>
+</html>

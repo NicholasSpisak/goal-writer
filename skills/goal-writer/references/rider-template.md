@@ -6,8 +6,9 @@
 2. [Skeleton](#skeleton)
 3. [The standard 11-phase shape](#the-standard-11-phase-shape)
 4. [Depth-test discipline](#depth-test-discipline)
-5. [Threshold calibration notes](#threshold-calibration-notes)
-6. [Section notes](#section-notes)
+5. [Verification as a companion skill](#verification-as-a-companion-skill)
+6. [Threshold calibration notes](#threshold-calibration-notes)
+7. [Section notes](#section-notes)
 
 ## Path and naming
 
@@ -161,6 +162,14 @@ Tier 3 (blocked): same blocks as prior riders.
   isn't user-visible.
 - If a phase reveals a V1-architecture decision, stop and log it in
   `V1-CANDIDATES.md`; do not silently expand scope.
+- (Recommended, user-facing rounds) The round's Verification runs
+  through a companion verify skill, `<path to verify SKILL.md>`, so the
+  agent self-verifies end-to-end. See "Verification as a companion
+  skill" below.
+- (Recommended) After the round, a fresh-context reviewer
+  (`/code-review`, or a second agent / Codex on the diff) reviews the
+  change before it is considered done — a reviewer that never saw the
+  executor's reasoning catches what it rationalized past.
 ```
 
 ## The standard 11-phase shape
@@ -212,6 +221,58 @@ against the rider's list:
 | Python | `grep -c '^def test_' test_<file>.py` |
 
 A typical round lands 30–80 named depth tests.
+
+## Verification as a companion skill
+
+Depth tests prove the code does what the rider said. A **verify skill**
+proves the *result* is good the way a human reviewer would judge it —
+the single highest-leverage way to raise a loop's output quality. The
+guidance is the Claude Code team's: encode what "good" looks like as a
+`SKILL.md` so the agent checks more of its own work end-to-end, with the
+tools or connectors it needs to see, measure, or interact with the
+result. The more quantitative the checks, the easier the agent
+self-verifies — and the less an evaluator or completion audit has to
+take on faith.
+
+When the round is user-facing, recommend a companion verify skill and
+point the rider's Verification at it. It is a peer of the goal+rider
+pair, not a phase; it lives at a stable path (`.claude/skills/` or
+`.agents/skills/`) and is reused across rounds. It runs headless in both
+harnesses, so a Codex `codex exec` run or a Claude Code `/goal` run
+verifies identically.
+
+A verify skill for a frontend round, modeled on the Claude Code team's
+example:
+
+```markdown
+---
+name: verify-frontend-change
+description: Verify any UI change end-to-end before declaring it done.
+---
+
+# Verifying frontend changes
+
+Never report a UI change as complete based on a successful edit alone.
+Verify it the way a human reviewer would:
+
+1. Start the dev server and open the edited page in the browser.
+2. Interact with the change directly — click the new control, confirm
+   the expected state change, screenshot before/after.
+3. Check the browser console: zero new errors or warnings.
+4. Run a performance trace; audit Core Web Vitals against the budget.
+
+If any step fails, fix it and rerun from step 1 — never hand back
+partially verified work.
+```
+
+The rider then cites it, e.g. under Verification: "Every UI phase ends
+by running `verify-frontend-change`; its four checks pass with output in
+the transcript." That keeps the verification transcript-provable (Claude
+Code's evaluator sees the checks run) and evidence-backed (Codex's
+completion audit maps each check to real output), while the *definition*
+of good lives in one reusable skill instead of being re-specified each
+round. This is the rider-level companion to discipline-checklist item 13
+in `SKILL.md`.
 
 ## Threshold calibration notes
 

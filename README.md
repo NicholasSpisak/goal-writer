@@ -7,6 +7,10 @@ with the official `/goal` best practices of **Claude Code** and
 
 Invoke it as `/goal-writer` in Claude Code, or `$goal-writer` in Codex.
 
+**Documentation site:** https://nicholasspisak.github.io/goal-writer/ —
+a plain-language, accessible walkthrough of the two-file system and the
+four loop types.
+
 ## The two-file system
 
 One round of agent work gets two committed markdown files in your
@@ -28,6 +32,20 @@ The pattern is Greg Ceccarelli's
 [goal engineering](https://www.gregceccarelli.com/goal-engineering):
 *"The cap forces decisions. The rider forces precision. The phases
 force sequencing. The depth tests force testability."*
+
+## One pair, four loop types
+
+A loop is an agent repeating cycles of work until a stop condition is
+met, and `/goal` is one of four types (turn-based, goal-based,
+time-based, proactive). The pair is **primitive-agnostic**: `/goal` is
+its primary runtime, but the same two files feed a turn-based
+verification skill, a scheduled `/loop`, or a proactive routine without
+a rewrite. `/loop`, `/schedule`, and dynamic workflows are Claude Code
+primitives; Codex does the same recurring work by wrapping headless
+`codex exec` in a scheduler. The skill also recommends encoding "what
+good looks like" as a companion verify skill so the agent self-verifies
+end-to-end. See
+[references/harness-goal-commands.md](skills/goal-writer/references/harness-goal-commands.md).
 
 ## What the skill does
 

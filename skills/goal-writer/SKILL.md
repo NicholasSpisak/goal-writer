@@ -25,6 +25,14 @@ Cursor, or a human reviewer without modification. The slash command is
 the runtime; the pair is the spec. The pair compounds; the slash command
 does not.
 
+The pair is also **primitive-agnostic**. A loop is an agent repeating
+cycles of work until a stop condition is met, and `/goal` is one of four
+loop types (turn-based, goal-based, time-based, proactive). `/goal` is
+this skill's primary runtime, but the same two files feed a turn-based
+verification skill, a scheduled `/loop`, or a proactive routine without a
+rewrite — see [references/harness-goal-commands.md](references/harness-goal-commands.md).
+Start with the simplest loop that fits the task.
+
 This skill is project-agnostic. Substitute the project's own toolchain
 commands wherever the templates say `<project's ... command>`.
 
@@ -197,6 +205,16 @@ directly into either harness's `/goal` because of the cap:
   `claude -p "/goal ..."`).
 - **Codex CLI:** `/goal <goal file body>`.
 
+**Model selection (recommendation).** Spend the sharpest, most limited
+model on judgment — scoping the round and authoring this pair — and hand
+the execution to a thorough builder. In practice that is often the
+architect/builder split: the most capable model designs and writes the
+goal+rider; Codex, which tends to be more exhaustive on implementation
+detail, runs the phase loop. Route recurring or mechanical loops
+(time-based, proactive) to smaller, faster models and reserve the
+expensive model for the calls that actually need judgment. Choosing the
+right model per task is as much a token-management lever as the turn cap.
+
 Harness mechanics, evaluator limits, and per-harness tips:
 [references/harness-goal-commands.md](references/harness-goal-commands.md).
 
@@ -228,6 +246,19 @@ Harness mechanics, evaluator limits, and per-harness tips:
 12. Verification must be provable from the executing agent's own
     transcript output — a tool-less evaluator can only judge what the
     agent surfaced.
+13. Verification as a companion skill (recommended for user-facing
+    rounds): encode "what good looks like" as a `SKILL.md` with
+    quantitative checks and the tools/connectors to run them, and point
+    the rider's Verification at it, so the agent self-verifies
+    end-to-end instead of trusting a successful edit. Depth tests and a
+    verify skill reinforce each other; the verify skill runs headless in
+    both harnesses. See the rider template.
+14. Loop hygiene (recommended): set an explicit turn cap in `Stop when`
+    ("stop after N tries"); after the round, run a fresh-context
+    reviewer (`/code-review` or a second agent); and when a result
+    misses the bar, encode the fix as a durable invariant or named depth
+    test so every future iteration inherits it — don't just patch the
+    one issue.
 
 ## Anti-patterns
 

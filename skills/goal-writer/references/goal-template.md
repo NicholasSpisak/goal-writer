@@ -100,7 +100,8 @@ project architecture doc.
 - No edits outside `<project>`. No `git push`. No schema changes.
 
 **Stop when** verification passes, AS-BUILT updated, CHANGELOG has a
-"<Milestone name> (<tier>)" section, committed locally.
+"<Milestone name> (<tier>)" section, committed locally — or stop after
+<N> turns and report what remains.
 ```
 
 ## Section-by-section rules
@@ -138,8 +139,14 @@ criteria. Every bullet is a command the executing agent runs whose
 output lands in the transcript, plus the expected result. See the next
 section.
 
-**Stop when.** A single sentence tying verification to a final commit.
-Never "stop when it feels done."
+**Stop when.** A single sentence tying verification to a final commit,
+plus an explicit turn cap. The official guidance pairs a precise
+completion condition with a bound — "stop after 5 tries" — so end this
+line with "or stop after `<N>` turns and report what remains." The
+condition tells the agent when it is done; the cap tells it when to give
+up, and keeps a stalled loop from burning tokens indefinitely. Default
+to including it; drop it only when a hard external stop already bounds
+the run. Never "stop when it feels done."
 
 ## Making the goal /goal-compatible
 

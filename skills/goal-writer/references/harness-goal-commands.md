@@ -8,9 +8,11 @@ check `--help` / official docs if a flag misbehaves.
 ## Contents
 
 1. [The shared pattern](#the-shared-pattern)
-2. [Claude Code /goal](#claude-code-goal)
-3. [Codex CLI /goal](#codex-cli-goal)
-4. [Writing for both evaluators at once](#writing-for-both-evaluators-at-once)
+2. [Where the pair fits in the loop taxonomy](#where-the-pair-fits-in-the-loop-taxonomy)
+3. [Claude Code /goal](#claude-code-goal)
+4. [Codex CLI /goal](#codex-cli-goal)
+5. [Writing for both evaluators at once](#writing-for-both-evaluators-at-once)
+6. [Managing the run](#managing-the-run)
 
 ## The shared pattern
 
@@ -25,6 +27,36 @@ the goal file is capped. The handoff is the same in both:
 The harness `/goal` is session-scoped and dies with the thread. The
 pair is the project-scoped artifact that survives it: the slash command
 is the runtime, the pair is the spec.
+
+## Where the pair fits in the loop taxonomy
+
+The Claude Code team defines a **loop** as an agent repeating cycles of
+work until a stop condition is met, and categorizes loops by how they
+are triggered, how they are stopped, and which primitive drives them.
+`/goal` is one of four types. The goal+rider pair is **primitive-agnostic**:
+it is the durable spec, and each loop type is a different runtime that
+consumes it.
+
+| Loop | Trigger | Stops when | Claude Code primitive | Codex equivalent | Role of the goal+rider pair |
+|---|---|---|---|---|---|
+| **Turn-based** | A user prompt | Claude judges the task done or needs more context | The agentic loop + verification skills | Same (the agentic loop) | The rider's named depth tests *are* the "what good looks like" a turn-based verification skill would encode |
+| **Goal-based** | A manual `/goal` prompt | Goal met **or** turn cap reached | `/goal` | `/goal` (SQLite-persisted, optional token budget) | **Primary runtime.** The goal body *is* the condition; the rider is the map the executor reads first |
+| **Time-based** | A time interval | You cancel it, or the work completes (PR merges, queue empties) | `/loop`, `/schedule` | Headless `codex exec` wrapped in an external scheduler (cron / CI) | The same pair is re-fed each tick; the rider carries the invariants so each run starts grounded |
+| **Proactive** | An event or schedule, no human in real time | Each task exits when its goal is met; the routine runs until turned off | `/schedule` + `/goal` + dynamic workflows + auto mode | `codex exec` in CI/cron + `/goal` | The pair is the per-task spec each spawned agent consumes; posture keeps parallel agents inside the fence |
+
+**Honest primitive delineation.** `/loop`, `/schedule`, dynamic
+workflows (research preview), and auto mode are **Claude Code**
+primitives. Codex does not ship `/loop` or `/schedule`; its recurring
+and proactive loops are built by wrapping headless `codex exec` in an
+external scheduler (cron, CI, a queue worker) that re-invokes the goal
+each cycle. What both harnesses share is the durable unit — `/goal`
+plus the pair — so a pair authored once drives a manual goal run today
+and a scheduled routine later without a rewrite.
+
+Start with the simplest loop that fits the task. Most rounds this skill
+briefs are **goal-based**: a verifiable exit condition, run once,
+manually. Reach for time-based or proactive loops only when the work
+genuinely recurs or arrives from an external system.
 
 ## Claude Code /goal
 
@@ -125,3 +157,33 @@ Two failure modes to design out:
 The phase loop's per-commit green requirement means evidence
 accumulates in the transcript naturally: every phase produces test
 output the evaluator can read.
+
+## Managing the run
+
+A loop's cost is bounded by clear stop criteria and by watching the run,
+not by hoping. Recommended, not required:
+
+- **Set an explicit turn cap.** The article's guidance is blunt: pair
+  the completion condition with a bound like "stop after 5 tries." A
+  precise condition tells the agent when it is done; the cap tells it
+  when to give up. The goal skeleton's `Stop when` line carries both.
+- **Watch token spend mid-run.** In Claude Code: bare `/goal` shows the
+  condition, turns evaluated, token spend, and the evaluator's latest
+  reason; `/usage` breaks recent spend down by skill, subagent, and MCP;
+  `/workflows` shows each agent's spend and lets you stop one. In Codex:
+  bare `/goal` shows progress against the objective, and a per-goal
+  token budget marks the goal budget-limited when exhausted so the model
+  wraps up with a summary.
+- **Match the interval to the change rate.** For time-based and
+  proactive loops, don't run a routine more often than the thing it
+  watches actually changes — react to events over polling on a tight
+  timer where you can.
+- **Use a fresh-context reviewer.** After the round, a second agent with
+  clean context (`/code-review`, or Codex reviewing another run's diff)
+  catches what the executor rationalized past. See the rider template's
+  process invariants.
+- **Encode the fix into the system.** When a result misses the bar,
+  don't stop at patching the one issue — encode "what good looks like"
+  as a durable invariant or named depth test so every future iteration
+  inherits it. This is why the pair compounds and the slash command does
+  not.
