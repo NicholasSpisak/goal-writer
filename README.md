@@ -74,6 +74,32 @@ it:
 
 ## Install
 
+**Preferred — the Vercel skills CLI** ([`npx skills`](https://github.com/vercel-labs/skills)):
+
+```bash
+npx skills add NicholasSpisak/goal-writer
+```
+
+That's the whole onboarding. The CLI detects which agents you have
+(Claude Code, Codex, and others), then asks where to put the skill —
+this project (into each agent's skills dir, e.g. `.claude/skills/`) or
+globally for your local agent — and whether to symlink (auto-updates)
+or copy. It reads `SKILL.md` straight from this repo; nothing to clone.
+
+Skip the prompts for a global, both-harness, non-interactive install:
+
+```bash
+npx skills add NicholasSpisak/goal-writer -g -a claude-code -a codex -y
+```
+
+Useful flags: `-g` global (user-level) instead of project · `-a <agent>`
+target a specific agent · `--copy` copy instead of symlink · `-l` list
+skills without installing · `-y` skip confirmation prompts. Full syntax:
+[`npx skills add --help`](https://github.com/vercel-labs/skills).
+
+<details>
+<summary>Alternative — the bundled <code>install.sh</code></summary>
+
 ```bash
 git clone https://github.com/NicholasSpisak/goal-writer.git
 cd goal-writer
@@ -96,6 +122,8 @@ Manual install: copy `skills/goal-writer/` to
 > Note: Claude Code and Codex read different skill directories, so the
 > installer copies to both. Codex's older `~/.codex/skills` path is
 > deprecated; this installer uses the current `~/.agents/skills`.
+
+</details>
 
 ## Use
 

@@ -543,14 +543,13 @@
         <span class="sec-no" aria-hidden="true">06</span>
         <h2 id="install-h">Install &amp; use</h2>
       </div>
-      <p class="sec-intro">One installer copies the skill into both harnesses. Then invoke it with your idea and let it draft the pair.</p>
-      <div class="term" role="img" aria-label="Terminal commands: clone the goal-writer repository, change into it, and run the install script for both harnesses at the user level.">
+      <p class="sec-intro">One command installs the skill through the Vercel <code style="font-family:var(--font-mono);font-size:.82em">npx skills</code> CLI — it detects your agents and asks where to put it. Then invoke it with your idea and let it draft the pair.</p>
+      <div class="term" role="img" aria-label="Terminal command: run npx skills add for the NicholasSpisak goal-writer repository to install the skill.">
         <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
-        <pre><span class="c"># clone and install for Claude Code + Codex</span>
-git clone https://github.com/NicholasSpisak/goal-writer.git
-<span class="k">cd</span> goal-writer
-./install.sh              <span class="c"># both harnesses, user-level</span></pre>
+        <pre><span class="c"># preferred — the Vercel skills CLI</span>
+<span class="k">npx</span> skills add NicholasSpisak/goal-writer</pre>
       </div>
+      <p class="note">The CLI detects which agents you have (Claude Code, Codex, and more), asks whether to install into your current project or globally, and whether to symlink for auto-updates or copy. Prefer the old script? <code style="font-family:var(--font-mono);font-size:.82em">git clone</code> the repo and run <code style="font-family:var(--font-mono);font-size:.82em">./install.sh</code> — see the <a href="https://github.com/NicholasSpisak/goal-writer#install">README</a>.</p>
       <div class="install-grid">
         <article class="hcard">
           <div class="top">In Claude Code</div>
