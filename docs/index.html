@@ -215,6 +215,23 @@
   .install-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:22px; align-items:start}
   @media(max-width:720px){.install-grid{grid-template-columns:1fr}}
 
+  /* community CTA band */
+  .community{border-bottom:1px solid var(--rule)}
+  .cta-band{background:var(--ink); border-radius:10px; padding:clamp(30px,5vw,54px);
+    display:grid; grid-template-columns:1.5fr auto; gap:clamp(20px,4vw,44px); align-items:center;
+    box-shadow:var(--shadow); position:relative; overflow:hidden}
+  .cta-band::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px; background:var(--signal)}
+  @media(max-width:720px){.cta-band{grid-template-columns:1fr; text-align:left}}
+  .cta-band .kicker{color:var(--signal); margin-bottom:16px}
+  .cta-band .kicker::before{background:var(--signal)}
+  .cta-band h2{color:var(--paper); font-size:clamp(1.7rem,3.4vw,2.5rem); max-width:18ch; margin:0 0 .35em}
+  .cta-band p{color:color-mix(in srgb,var(--paper) 70%,var(--ink)); margin:0; max-width:46ch; font-size:1.03rem}
+  .cta-band .go{font-family:var(--font-mono); font-weight:600; font-size:.92rem; text-decoration:none;
+    background:var(--signal); color:#fff; border:2px solid var(--signal); padding:16px 26px; border-radius:4px;
+    display:inline-flex; align-items:center; gap:10px; white-space:nowrap; transition:transform .12s ease, box-shadow .12s ease}
+  .cta-band .go:hover{color:#fff; transform:translate(-2px,-2px); box-shadow:5px 5px 0 rgba(255,255,255,.22)}
+  @media(prefers-reduced-motion:reduce){.cta-band .go:hover{transform:none}}
+
   /* footer */
   footer{padding:clamp(44px,7vw,72px) 0; border-bottom:none}
   .foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:32px}
@@ -503,6 +520,20 @@ git clone https://github.com/NicholasSpisak/goal-writer.git
     </div>
   </section>
 
+  <!-- COMMUNITY CTA -->
+  <section class="community" aria-labelledby="cta-h">
+    <div class="wrap">
+      <div class="cta-band">
+        <div>
+          <p class="kicker">AI Operator Academy</p>
+          <h2 id="cta-h">Learn to run agents like this.</h2>
+          <p>Goal Writer is one piece of a bigger practice — designing loops, briefing agents, and shipping real work. Come build with the community.</p>
+        </div>
+        <a class="go" href="https://www.skool.com/aioperatoracademy/about" rel="noopener">Join AI Operator Academy →</a>
+      </div>
+    </div>
+  </section>
+
   <footer aria-labelledby="foot-h">
     <div class="wrap">
       <h2 id="foot-h" style="position:absolute;left:-999px">Site footer</h2>
@@ -510,6 +541,7 @@ git clone https://github.com/NicholasSpisak/goal-writer.git
         <div>
           <div class="tglobe">Goal&nbsp;Writer</div>
           <p style="color:var(--ink-soft);max-width:38ch;margin:.6em 0 0">Think hard up front. Define done. Delegate the middle. The pair compounds; the slash command does not.</p>
+          <p style="margin:.9em 0 0"><a href="https://www.skool.com/aioperatoracademy/about" rel="noopener" style="font-family:var(--font-mono);font-size:.82rem;color:var(--signal-ink)">→ Join the AI Operator Academy community</a></p>
         </div>
         <div>
           <h4>Project</h4>
