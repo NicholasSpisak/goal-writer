@@ -11,6 +11,10 @@ Invoke it as `/goal-writer` in Claude Code, or `$goal-writer` in Codex.
 a plain-language, accessible walkthrough of the two-file system and the
 four loop types.
 
+**Learn to run agents like this:** join the
+[AI Operator Academy](https://www.skool.com/aioperatoracademy/about)
+community — designing loops, briefing agents, and shipping real work.
+
 ## The two-file system
 
 One round of agent work gets two committed markdown files in your
@@ -145,6 +149,12 @@ hot-fixes and 15-minute polish; the overhead amortizes only against
 rounds that would otherwise run hours of agent time. The pattern also
 wants a real architecture doc, a CHANGELOG, and a fast (~30 s) test
 lane — the skill offers to bootstrap the missing pieces first.
+
+## Community
+
+Goal Writer is one piece of a bigger practice — designing loops,
+briefing agents, and shipping real work. Come build with the community:
+**[Join the AI Operator Academy](https://www.skool.com/aioperatoracademy/about).**
 
 ## Credits
 
