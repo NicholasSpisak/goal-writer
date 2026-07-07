@@ -3,12 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Goal Writer — brief an AI coding agent on a whole round of work, in two files</title>
-<meta name="description" content="Goal Writer is a portable skill for Claude Code and OpenAI Codex. It drafts a goal+rider document pair: a tight goal that fits the /goal limit plus an unlimited rider that carries the context, so an autonomous coding agent gets a finish line and a map.">
+<title>Writing /goals that don't s*ck — Goal Writer for Claude Code &amp; Codex</title>
+<meta name="description" content="Stop your AI coding agent from wandering. Goal Writer drafts goal+rider pairs for the /goal command in Claude Code and OpenAI Codex — a tight goal that fits the 4,000-character limit plus an unlimited rider that carries the context.">
 <meta name="author" content="Nick Spisak">
-<meta property="og:title" content="Goal Writer — a finish line and a map for your coding agent">
-<meta property="og:description" content="Drafts goal+rider document pairs for Claude Code and OpenAI Codex, aligned with the official /goal best practices and the four loop types.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="keywords" content="/goal command, Claude Code, OpenAI Codex, goal engineering, agentic coding, autonomous coding agent, goal writer, goal+rider, agent loops, slash commands">
+<link rel="canonical" href="https://nicholasspisak.github.io/goal-writer/">
+<meta name="theme-color" content="#BF3B22">
+
+<!-- Open Graph -->
+<meta property="og:site_name" content="Goal Writer">
+<meta property="og:title" content="Writing /goals that don't s*ck">
+<meta property="og:description" content="Goal Writer drafts goal+rider document pairs for the /goal command in Claude Code and OpenAI Codex — a finish line and a map for your coding agent.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://nicholasspisak.github.io/goal-writer/">
+<meta property="og:image" content="https://nicholasspisak.github.io/goal-writer/og-writing-goals.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Writing /goals that don't s*ck">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Writing /goals that don't s*ck">
+<meta name="twitter:description" content="Goal Writer drafts goal+rider pairs for the /goal command in Claude Code and OpenAI Codex — a finish line and a map for your coding agent.">
+<meta name="twitter:image" content="https://nicholasspisak.github.io/goal-writer/og-writing-goals.png">
+<meta name="twitter:image:alt" content="Writing /goals that don't s*ck">
+<meta name="twitter:creator" content="@NickSpisak_">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Goal Writer",
+  "alternateName": "/goal-writer",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS, Linux, Windows",
+  "description": "A portable skill for Claude Code and OpenAI Codex that drafts goal+rider document pairs for the /goal command: a tight goal under 4,000 characters plus an unlimited rider that carries the context, so an autonomous coding agent gets a finish line and a map.",
+  "url": "https://nicholasspisak.github.io/goal-writer/",
+  "image": "https://nicholasspisak.github.io/goal-writer/og-writing-goals.png",
+  "author": { "@type": "Person", "name": "Nick Spisak" },
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "keywords": "Claude Code, OpenAI Codex, /goal command, agentic coding, goal engineering, autonomous coding agent, agent loops",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+
+<link rel="preload" as="image" href="writing-goals-that-dont-suck.webp" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..600&family=Public+Sans:ital,wght@0,400..800;1,400..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -115,7 +156,13 @@
   .btn.ghost:hover{color:var(--ink); transform:translate(-2px,-2px); box-shadow:5px 5px 0 var(--rule-strong)}
   @media(prefers-reduced-motion:reduce){.btn:hover{transform:none}}
 
+  .hero-title{margin:0 0 clamp(30px,4.5vw,48px)}
+  .hero-title picture{display:block}
+  .hero-title img{width:100%; max-width:860px; height:auto; display:block; border-radius:14px;
+    box-shadow:0 20px 60px -22px rgba(191,59,34,.5)}
+  :root[data-theme="dark"] .hero-title img, :root:not([data-theme="light"]) .hero-title img{box-shadow:0 22px 70px -20px rgba(232,115,74,.4)}
   .hero-cols{display:grid; grid-template-columns:1.1fr .9fr; gap:clamp(28px,5vw,64px); align-items:start}
+  .hero-lower{align-items:center}
   @media(max-width:820px){.hero-cols{grid-template-columns:1fr}}
 
   /* the two-file emblem */
@@ -276,32 +323,40 @@
 
   <!-- HERO -->
   <section class="hero" aria-labelledby="h1">
-    <div class="wrap hero-cols">
-      <div>
-        <p class="kicker anim d1">A skill for Claude Code &amp; OpenAI Codex</p>
-        <h1 id="h1" class="anim d2">A finish line <em>and</em> a map for your coding agent.</h1>
-        <p class="lede anim d3">You hand an AI agent a goal and walk away; it works until the job is <strong>provably done</strong>. Goal Writer drafts the two files that make that actually work — a tight goal the agent can't misread, and a companion that carries everything else.</p>
-        <div class="cta-row anim d4">
-          <a class="btn primary" href="#install">Install the skill</a>
-          <a class="btn ghost" href="https://github.com/NicholasSpisak/goal-writer">View on GitHub</a>
+    <div class="wrap">
+      <p class="kicker anim d1">A skill for Claude Code &amp; OpenAI Codex</p>
+      <h1 id="h1" class="hero-title anim d2">
+        <picture>
+          <source srcset="writing-goals-that-dont-suck.webp" type="image/webp">
+          <img src="writing-goals-that-dont-suck.png" width="1983" height="793"
+               alt="Writing /goals that don't s*ck" fetchpriority="high" decoding="async">
+        </picture>
+      </h1>
+      <div class="hero-cols hero-lower">
+        <div>
+          <p class="lede anim d3">You hand an AI agent a goal and walk away; it works until the job is <strong>provably done</strong>. Most goals wander because the <code>/goal</code> box only holds 4,000 characters. Goal Writer drafts the two files that fix it — a tight goal the agent can't misread, and a companion that carries everything else.</p>
+          <div class="cta-row anim d4">
+            <a class="btn primary" href="#install">Install the skill</a>
+            <a class="btn ghost" href="https://github.com/NicholasSpisak/goal-writer">View on GitHub</a>
+          </div>
         </div>
-      </div>
-      <div class="emblem anim d5" role="img" aria-label="Diagram: a small capped Goal document sits above a taller unlimited Rider document; the rider rides along with the goal.">
-        <div class="doc goal">
-          <h3><span>goal.md · the spine</span> <span class="cap">≤ 4,000 chars</span></h3>
-          <div class="barline"><i style="width:92%"></i></div>
-          <div class="barline"><i style="width:74%"></i></div>
-          <div class="barline"><i style="width:83%"></i></div>
-        </div>
-        <p class="rides"><span aria-hidden="true">▲ rides along ▲</span></p>
-        <div class="doc rider">
-          <h3><span>rider.md · the map</span> <span class="cap" style="background:var(--slate);border-color:var(--slate);color:#fff">no limit</span></h3>
-          <div class="barline"><i style="width:96%"></i></div>
-          <div class="barline"><i style="width:88%"></i></div>
-          <div class="barline"><i style="width:91%"></i></div>
-          <div class="barline"><i style="width:70%"></i></div>
-          <div class="barline"><i style="width:85%"></i></div>
-          <div class="barline"><i style="width:79%"></i></div>
+        <div class="emblem anim d5" role="img" aria-label="Diagram: a small capped Goal document sits above a taller unlimited Rider document; the rider rides along with the goal.">
+          <div class="doc goal">
+            <h3><span>goal.md · the spine</span> <span class="cap">≤ 4,000 chars</span></h3>
+            <div class="barline"><i style="width:92%"></i></div>
+            <div class="barline"><i style="width:74%"></i></div>
+            <div class="barline"><i style="width:83%"></i></div>
+          </div>
+          <p class="rides"><span aria-hidden="true">▲ rides along ▲</span></p>
+          <div class="doc rider">
+            <h3><span>rider.md · the map</span> <span class="cap" style="background:var(--slate);border-color:var(--slate);color:#fff">no limit</span></h3>
+            <div class="barline"><i style="width:96%"></i></div>
+            <div class="barline"><i style="width:88%"></i></div>
+            <div class="barline"><i style="width:91%"></i></div>
+            <div class="barline"><i style="width:70%"></i></div>
+            <div class="barline"><i style="width:85%"></i></div>
+            <div class="barline"><i style="width:79%"></i></div>
+          </div>
         </div>
       </div>
     </div>
